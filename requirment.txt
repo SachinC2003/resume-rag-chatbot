@@ -1,0 +1,4 @@
+pymupdf
+chromadb
+groq
+python-dotenv

@@ -1,0 +1,10 @@
+[project]
+name = "2-practice-handson"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "chromadb>=1.5.9",
+    "groq>=1.7.0",
+    "pymupdf>=2.0",
+    "python-dotenv>=1.2.4",
+]
