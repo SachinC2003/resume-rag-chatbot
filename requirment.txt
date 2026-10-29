@@ -2,3 +2,5 @@ pymupdf
 chromadb
 groq
 python-dotenv
+sentence-transformers
+langchain_groq
