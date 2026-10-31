@@ -3,6 +3,7 @@ import chromadb
 from src.config import CHROMA_DB_PATH, LLM_MODEL
 from src.embeddings import embedding_function
 from src.llm_client import client
+from src.rerancking import reranking
 
 def generate_answer(query: str, context: str) -> str:
     response = client.chat.completions.create(
@@ -28,7 +29,11 @@ def generate_answer(query: str, context: str) -> str:
     return response.choices[0].message.content or ""
 
 
-def run_rag_pipeline(query: str, enhanced_query: dict | None = None) -> str:
+def run_rag_pipeline(
+        query: str,
+        section: str,
+        enhanced_query: dict | None = None
+) -> str:
     """Retrieve relevant resume chunks and generate an answer."""
 
     # 1. Create an embedding for the user's question
@@ -46,11 +51,18 @@ def run_rag_pipeline(query: str, enhanced_query: dict | None = None) -> str:
     if result_count == 0:
         raise RuntimeError("The resume collection is empty. Run the application to index the PDF first.")
 
-    # 3. Retrieve the top 3 relevant chunks
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=min(5, result_count),
-    )
+
+
+    # 3. Retrieve the top 5 relevant chunks
+    query_args = {
+        "query_embeddings": query_embedding,
+        "n_results": min(10, result_count)
+    }
+
+    if section != "general":
+        query_args["where"] = {"section": section}
+
+    results = collection.query(**query_args)
 
     # 4. Extract and combine the retrieved text
     documents = []
@@ -60,8 +72,11 @@ def run_rag_pipeline(query: str, enhanced_query: dict | None = None) -> str:
             if doc not in documents:
                 documents.append(doc)
 
+    # Reranking the chunks according to relevance
+    reranked_chunks = reranking(documents, query)
+
     # Limit the total retrieved chunks.
-    documents = documents[0:5]
+    documents = reranked_chunks[0:3]
     if not documents:
         raise RuntimeError("No resume content was returned for the question.")
     context = "\n\n".join(documents)

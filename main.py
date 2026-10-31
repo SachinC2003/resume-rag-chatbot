@@ -5,6 +5,7 @@ from src.chunking import split_document
 from src.vector_store import store_embeddings_in_vector_db
 from src.rag_pipeline import run_rag_pipeline
 from src.query_enhancement import enhance_query
+from src.classify import classify_query_or_chunk
 
 def main():
     # Load the document
@@ -39,6 +40,9 @@ def main():
         print("Processing your question...")
         print("\nUserQuery: ", query)
 
+        # determine the section of question
+        section = classify_query_or_chunk(query)
+        print("\nThe section :- ", section)
         try:
             enhanced_query = enhance_query(query)
         except Exception:
@@ -46,7 +50,7 @@ def main():
                 "search_queries": [query]
             }
 
-        result = run_rag_pipeline(query, enhanced_query)
+        result = run_rag_pipeline(query, section, enhanced_query)
 
         print("\nFINAL ANSWER:")
         print(result)
