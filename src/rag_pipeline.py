@@ -1,21 +1,10 @@
 
 import chromadb
-import os
-from dotenv import load_dotenv
-from groq import Groq
-
-from src.config import CHROMA_DB_PATH, LLM_MODEL, PROJECT_ROOT
+from src.config import CHROMA_DB_PATH, LLM_MODEL
 from src.embeddings import embedding_function
+from src.llm_client import client
 
 def generate_answer(query: str, context: str) -> str:
-    load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
-
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("GROQ_API_KEY is not set. Add it to the .env file.")
-
-    client = Groq(api_key=api_key)
-
     response = client.chat.completions.create(
         model=LLM_MODEL,
         messages=[
@@ -39,11 +28,15 @@ def generate_answer(query: str, context: str) -> str:
     return response.choices[0].message.content or ""
 
 
-def run_rag_pipeline(query: str) -> str:
+def run_rag_pipeline(query: str, enhanced_query: dict | None = None) -> str:
     """Retrieve relevant resume chunks and generate an answer."""
 
     # 1. Create an embedding for the user's question
-    query_embedding = embedding_function([query])[0]
+    search_queries = (enhanced_query or {}).get("search_queries", [])
+    if not search_queries:
+        search_queries = [query]
+
+    query_embedding = embedding_function(search_queries)
 
     # 2. Connect to ChromaDB
     client = chromadb.PersistentClient(path=str(CHROMA_DB_PATH))
@@ -55,12 +48,20 @@ def run_rag_pipeline(query: str) -> str:
 
     # 3. Retrieve the top 3 relevant chunks
     results = collection.query(
-        query_embeddings=[query_embedding],
+        query_embeddings=query_embedding,
         n_results=min(5, result_count),
     )
 
     # 4. Extract and combine the retrieved text
-    documents = results["documents"][0]
+    documents = []
+
+    for query_result in results["documents"]:
+        for doc in query_result:
+            if doc not in documents:
+                documents.append(doc)
+
+    # Limit the total retrieved chunks.
+    documents = documents[0:5]
     if not documents:
         raise RuntimeError("No resume content was returned for the question.")
     context = "\n\n".join(documents)

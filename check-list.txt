@@ -1,0 +1,158 @@
+I agree. Before moving to multiple resumes, let's make your existing single-resume RAG chatbot a strong, advanced RAG project.
+
+We'll improve retrieval quality, query processing, reranking, context construction, and answer generation. We'll complete and test each feature before moving to the next one.
+
+# Single Resume RAG — Improvement Checklist
+
+Project progress
+
+# 0/33
+
+Tick each task after implementation and testing.
+
+1\. Query processing
+
+Improve how the system understands user questions.
+
+Query rewriting — convert user questions into better search queries.
+
+Query expansion — generate alternative terms and related keywords.
+
+Query classification — identify whether the question asks for skills, projects, experience, education, or general information.
+
+2\. Retrieval improvements
+
+Improve which resume chunks are retrieved.
+
+Experiment with chunk size and overlap.
+
+Implement section-aware chunking.
+
+Understand similarity scores and distance metrics.
+
+Tune Top-K retrieval.
+
+Add metadata filtering — retrieve specific resume sections.
+
+Implement hybrid search — combine vector search and BM25 keyword search.
+
+3\. Reranking
+
+Improve the ordering of retrieved chunks.
+
+Understand Cross-Encoder reranking.
+
+Implement reranking after initial retrieval.
+
+Compare retrieval results before and after reranking.
+
+Tune the number of retrieved and reranked chunks.
+
+4\. Context construction
+
+Prepare better information for the LLM.
+
+Remove duplicate or irrelevant chunks.
+
+Combine related chunks in a meaningful order.
+
+Implement context compression.
+
+Control context length to avoid unnecessary information.
+
+5\. Prompt engineering and answer generation
+
+Improve the final LLM response.
+
+Improve the system prompt with clear instructions.
+
+Add rules to prevent hallucinations.
+
+Require answers to be grounded in resume evidence.
+
+Use structured output (JSON) where appropriate.
+
+Handle missing information and ambiguous questions.
+
+Add source references or evidence excerpts in answers.
+
+6\. RAG evaluation
+
+Measure whether the improvements actually work.
+
+Create a fixed dataset of test questions and expected answers.
+
+Evaluate retrieval precision and recall.
+
+Evaluate answer faithfulness and relevance.
+
+Compare baseline RAG against improved RAG.
+
+Experiment with different chunk sizes, Top-K values, and reranking.
+
+7\. Final project improvements
+
+Make the project more complete and portfolio-ready.
+
+Improve error handling and logging.
+
+Add FastAPI endpoints.
+
+Add a simple user interface for asking questions.
+
+Dockerize the application.
+
+Update README with architecture, features, and evaluation results.
+
+Reset checklist
+
+## Recommended implementation order
+
+I suggest we follow this exact order:
+
+| Step | Feature                                  | Priority  |
+| ---- | ---------------------------------------- | --------- |
+| 1    | Query rewriting                          | High      |
+| 2    | Query expansion                          | High      |
+| 3    | Similarity scores and Top-K tuning       | High      |
+| 4    | Hybrid search (BM25 + vector)            | High      |
+| 5    | Cross-Encoder reranking                  | High      |
+| 6    | Context construction and compression     | Medium    |
+| 7    | Prompt enhancement and structured output | High      |
+| 8    | RAG evaluation                           | Very high |
+| 9    | FastAPI, UI, Docker                      | Later     |
+
+Note: Section-aware chunking is also important, but we can revisit it when tuning retrieval.
+
+## How we'll work
+
+For every feature:
+
+1. Understand the concept with a simple example.
+2. Understand why we need it.
+3. See where it fits in our existing RAG architecture.
+4. Implement it in your current code.
+5. Test with the same questions used by the baseline.
+6. Compare the results and record improvements.
+
+My suggestion: Start with Step 1 — Query Rewriting.
+
+We'll preserve your current working RAG pipeline as the baseline, so we can measure whether each improvement actually makes it better.
+
+
+
+
+
+
+
+Similarity scores and Top-K tuning.
+Hybrid search (Vector Search + BM25).
+Cross-Encoder reranking.
+Context construction and compression.
+Prompt engineering and structured output.
+RAG evaluation (retrieval quality and answer quality).
+
+
+
+
+similarity scores and reranking.

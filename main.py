@@ -4,6 +4,7 @@ from src.embeddings import embedding_function
 from src.chunking import split_document
 from src.vector_store import store_embeddings_in_vector_db
 from src.rag_pipeline import run_rag_pipeline
+from src.query_enhancement import enhance_query
 
 def main():
     # Load the document
@@ -38,7 +39,14 @@ def main():
         print("Processing your question...")
         print("\nUserQuery: ", query)
 
-        result = run_rag_pipeline(query)
+        try:
+            enhanced_query = enhance_query(query)
+        except Exception:
+            enhanced_query = {
+                "search_queries": [query]
+            }
+
+        result = run_rag_pipeline(query, enhanced_query)
 
         print("\nFINAL ANSWER:")
         print(result)
