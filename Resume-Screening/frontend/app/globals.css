@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: 80 20% 97%;
+  --background-muted: 100 17% 95%;
+  --foreground: 150 18% 11%;
+  --card: 0 0% 100%;
+  --border: 100 12% 90%;
+  --muted-foreground: 142 6% 42%;
+  --primary: 151 51% 28%;
+  --primary-soft: 138 39% 93%;
+  --danger: 0 68% 42%;
+  --danger-soft: 0 100% 97%;
+  --danger-border: 0 75% 88%;
+  --danger-foreground: 0 70% 35%;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: 150 12% 8%;
+  --background-muted: 150 10% 12%;
+  --foreground: 140 18% 92%;
+  --card: 150 10% 11%;
+  --border: 150 8% 23%;
+  --muted-foreground: 140 8% 65%;
+  --primary: 150 46% 42%;
+  --primary-soft: 150 24% 18%;
+  --danger: 0 78% 70%;
+  --danger-soft: 0 36% 17%;
+  --danger-border: 0 38% 30%;
+  --danger-foreground: 0 75% 76%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 86% 2%, hsl(var(--primary-soft) / 0.75), transparent 30rem),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .bg-ink,
+.dark .bg-accent {
+  background-color: hsl(151 51% 28%);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: hsl(var(--primary-soft));
+  color: hsl(var(--foreground));
+}
