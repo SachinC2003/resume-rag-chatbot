@@ -12,9 +12,9 @@ from sqlalchemy.exc import OperationalError
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from server.rag_runtime import RAG_PROJECT_ROOT
+SERVER_ROOT = Path(__file__).resolve().parent
 
-load_dotenv(RAG_PROJECT_ROOT / ".env")
+load_dotenv(SERVER_ROOT / ".env")
 
 from server import models
 from server.database import Base, ensure_database_exists, get_engine

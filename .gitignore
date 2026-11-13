@@ -6,3 +6,7 @@ __pycache__/
 !.env.example
 frontend/node_modules/
 frontend/.next/
+server/.venv/
+server/data/
+server/chroma_db/
+rag-server/
