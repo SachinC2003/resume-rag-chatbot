@@ -15,7 +15,7 @@ through the authenticated workspace.
 
 ## Run the API
 
-1. Copy `rag-server/.env.example` to `rag-server/.env` and set `DATABASE_URL`,
+1. Copy `server/.env.example` to `server/.env` and set `DATABASE_URL`,
    `DATABASE_ADMIN_URL`, a unique `JWT_SECRET_KEY`, and the existing
    `GROQ_API_KEY`. `DATABASE_ADMIN_URL` must connect to an existing maintenance
    database (usually `postgres`) with permission to create databases. The
@@ -26,17 +26,18 @@ through the authenticated workspace.
 From this directory:
 
 ```powershell
-uv sync --project .\rag-server
-uv run --project .\rag-server python -m uvicorn server.main:app --reload
+uv sync --project .\server
+uv run --project .\server python -m uvicorn server.main:app --reload
 ```
 
 For the direct command-line entry point, run `python main.py` from the
 `server` directory. It starts the API without auto-reload.
 
-On startup, the API creates the application database if it does not exist,
-then creates the `companies` and `events` tables. Once the application
-database is reachable, the admin URL is not used. Resume files and vectors use
-the existing `rag-server/data` and `rag-server/chroma_db` paths. Visit
+The RAG code is part of the backend under `server/rag`; no separate RAG server
+process is needed. On startup, the API creates the application database if it
+does not exist, then creates the `companies` and `events` tables. Once the
+application database is reachable, the admin URL is not used. Resume files and
+vectors are stored under `server/data` and `server/chroma_db`. Visit
 `http://localhost:8000/docs` for the API schema.
 
 ## Run the frontend

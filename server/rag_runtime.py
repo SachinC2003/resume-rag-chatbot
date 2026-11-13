@@ -1,18 +1,8 @@
 import shutil
 import re
-import sys
 import uuid
 from pathlib import Path
 from typing import Any
-
-RAG_PROJECT_ROOT = Path(__file__).resolve().parents[1] / "rag-server"
-if not RAG_PROJECT_ROOT.is_dir():
-    raise RuntimeError(f"RAG project directory not found: {RAG_PROJECT_ROOT}")
-
-rag_project_path = str(RAG_PROJECT_ROOT)
-if rag_project_path not in sys.path:
-    sys.path.insert(0, rag_project_path)
-
 
 def _candidate_name_from_filename(filename: str) -> str:
     candidate_name = Path(filename).stem
@@ -26,12 +16,12 @@ def _candidate_name_from_filename(filename: str) -> str:
 def index_resume(
     filename: str, content: bytes, company_id: str, event_id: str
 ) -> dict[str, str]:
-    from src.chunking import split_document
-    from src.config import RESUME_FOLDER_PATH
-    from src.document_loader import load_document
-    from src.dtos.resume_metadata import ResumeMetadata
-    from src.embeddings import embedding_function
-    from src.vector_store import store_embeddings_in_vector_db
+    from server.rag.chunking import split_document
+    from server.rag.config import RESUME_FOLDER_PATH
+    from server.rag.document_loader import load_document
+    from server.rag.dtos.resume_metadata import ResumeMetadata
+    from server.rag.embeddings import embedding_function
+    from server.rag.vector_store import store_embeddings_in_vector_db
 
     RESUME_FOLDER_PATH.mkdir(parents=True, exist_ok=True)
     temporary_path = RESUME_FOLDER_PATH / f".upload-{uuid.uuid4().hex}.pdf"
@@ -71,7 +61,7 @@ def list_indexed_resumes(
 ) -> list[dict[str, str]]:
     import chromadb
 
-    from src.config import CHROMA_DB_PATH, RESUME_PROFILE_COLLECTION_NAME
+    from server.rag.config import CHROMA_DB_PATH, RESUME_PROFILE_COLLECTION_NAME
 
     client = chromadb.PersistentClient(path=str(CHROMA_DB_PATH))
     collection = client.get_or_create_collection(
@@ -107,10 +97,10 @@ def search_candidates(
 ) -> list[dict[str, str]]:
     import chromadb
 
-    from src.classify import analyze_user_query
-    from src.config import CHROMA_DB_PATH, RESUME_PROFILE_COLLECTION_NAME
-    from src.query_enhancement import enhance_query
-    from src.rag_pipeline import retrieve_shortlisted_candidates
+    from server.rag.classify import analyze_user_query
+    from server.rag.config import CHROMA_DB_PATH, RESUME_PROFILE_COLLECTION_NAME
+    from server.rag.query_enhancement import enhance_query
+    from server.rag.rag_pipeline import retrieve_shortlisted_candidates
 
     query_analysis = analyze_user_query(query)
     enhanced_query = enhance_query(query)
@@ -205,7 +195,11 @@ def get_resume_pdf_path(
     import chromadb
 
     from server.models import Resume
-    from src.config import CHROMA_DB_PATH, RESUME_FOLDER_PATH, RESUME_PROFILE_COLLECTION_NAME
+    from server.rag.config import (
+        CHROMA_DB_PATH,
+        RESUME_FOLDER_PATH,
+        RESUME_PROFILE_COLLECTION_NAME,
+    )
 
     resume_record = db.get(Resume, candidate_id)
     if resume_record and (
@@ -261,7 +255,7 @@ def get_resume_pdf_path(
 def delete_event_resumes(company_id: str, event_id: str) -> None:
     import chromadb
 
-    from src.config import (
+    from server.rag.config import (
         CHROMA_DB_PATH,
         RESUME_FOLDER_PATH,
         RESUME_COLLECTION_NAME,
@@ -305,7 +299,7 @@ def delete_resume(
 ) -> bool:
     import chromadb
 
-    from src.config import (
+    from server.rag.config import (
         CHROMA_DB_PATH,
         RESUME_COLLECTION_NAME,
         RESUME_FOLDER_PATH,
