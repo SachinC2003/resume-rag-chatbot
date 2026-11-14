@@ -30,14 +30,18 @@ uv sync --project .\server
 uv run --project .\server python -m uvicorn server.main:app --reload
 ```
 
-For the direct command-line entry point, run `python main.py` from the
-`server` directory. It starts the API without auto-reload.
+To use pip instead of uv, install the backend dependencies from the `server`
+directory with `pip install -r requirements.txt`. Then run `python main.py`
+from that directory to start the API without auto-reload.
 
 The RAG code is part of the backend under `server/rag`; no separate RAG server
 process is needed. On startup, the API creates the application database if it
 does not exist, then creates the `companies` and `events` tables. Once the
-application database is reachable, the admin URL is not used. Resume files and
-vectors are stored under `server/data` and `server/chroma_db`. Visit
+application database is reachable, the admin URL is not used. Resume files are
+stored under `server/data`, and ChromaDB persists its vectors in the
+repository-root `chroma_db` directory. Mount a Docker volume at the
+application's `chroma_db` directory to persist vector data across deployments.
+Visit
 `http://localhost:8000/docs` for the API schema.
 
 ## Run the frontend
