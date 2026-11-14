@@ -10,3 +10,4 @@ server/.venv/
 server/data/
 /chroma_db/
 rag-server/
+*.tsbuildinfo

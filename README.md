@@ -37,11 +37,11 @@ from that directory to start the API without auto-reload.
 The RAG code is part of the backend under `server/rag`; no separate RAG server
 process is needed. On startup, the API creates the application database if it
 does not exist, then creates the `companies` and `events` tables. Once the
-application database is reachable, the admin URL is not used. Resume files are
-stored under `server/data`, and ChromaDB persists its vectors in the
-repository-root `chroma_db` directory. Mount a Docker volume at the
-application's `chroma_db` directory to persist vector data across deployments.
-Visit
+application database is reachable, the admin URL is not used. For local runs,
+resume files are stored under `server/data` and ChromaDB persists vectors in
+the repository-root `chroma_db` directory. In Compose, named volumes are
+mounted at the API container's `/app/server/data` and `/app/chroma_db` paths,
+so those local folders are not used by the running containers. Visit
 `http://localhost:8000/docs` for the API schema.
 
 ## Run the frontend

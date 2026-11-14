@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -17,7 +17,7 @@ SERVER_ROOT = Path(__file__).resolve().parent
 load_dotenv(SERVER_ROOT / ".env")
 
 from server import models
-from server.database import Base, ensure_database_exists, get_engine
+from server.database import ensure_database_exists, get_engine
 from server.routes.auth_routes import router as auth_router
 from server.routes.event_routes import router as event_router
 
@@ -29,7 +29,7 @@ async def lifespan(_: FastAPI):
     logger.info("Connecting to PostgreSQL and checking application tables...")
     try:
         ensure_database_exists()
-        Base.metadata.create_all(bind=get_engine())
+        models.Base.metadata.create_all(bind=get_engine())
     except (OperationalError, RuntimeError) as error:
         logger.exception(
             "PostgreSQL setup failed during application startup. Check "

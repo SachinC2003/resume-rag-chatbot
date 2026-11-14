@@ -1,3 +1,5 @@
+import logging
+
 import chromadb
 
 from server.rag.dtos.resume_metadata import ResumeMetadata
@@ -6,6 +8,9 @@ from server.rag.config import (
     RESUME_COLLECTION_NAME,
     RESUME_PROFILE_COLLECTION_NAME,
 )
+
+logger = logging.getLogger(__name__)
+
 
 def store_embeddings_in_vector_db(
     chunks: list[dict[str, str]],
@@ -79,4 +84,4 @@ def store_embeddings_in_vector_db(
         metadatas=metadatas
     )
 
-    print(f"Stored {len(chunks)} chunks in ChromaDB")
+    logger.info("Stored %d chunks in ChromaDB", len(chunks))

@@ -1,9 +1,12 @@
 import json
+import logging
 import re
-from server.rag.llm_client import client
+
 from server.rag.config import LLM_MODEL
+from server.rag.llm_client import client
 
 RESUME_SECTIONS = {"skills", "projects", "experience", "education", "general"}
+logger = logging.getLogger(__name__)
 
 
 # Use question keywords when the model does not return parseable JSON.
@@ -25,38 +28,11 @@ def _fallback_query_analysis(query: str) -> dict[str, str | None]:
             section = candidate_section
             break
 
-    print(
-        "Warning: query analyzer returned invalid JSON; "
+    logger.warning(
+        "Query analyzer returned invalid JSON; "
         f"using keyword-based section '{section}' and searching all candidates."
     )
     return {"section": section, "candidate_name": None}
-
-
-def classify_resume_section(text: str) -> str:
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Classify the provided resume text into exactly one category: "
-                    "skills, projects, experience, education, or general. "
-                    "Return only the lowercase category name."
-                ),
-            },
-            {"role": "user", "content": text},
-        ],
-        temperature=0.2,
-    )
-
-    section = (response.choices[0].message.content or "").strip().lower()
-    if section not in RESUME_SECTIONS:
-        print(
-            f"Warning: resume section classifier returned {section!r}; "
-            "storing this chunk as general."
-        )
-        return "general"
-    return section
 
 
 def analyze_user_query(query: str) -> dict[str, str | None]:
