@@ -58,3 +58,27 @@ Open `http://localhost:3000`. Start at the public landing page, register a
 company, create a hiring event, upload PDF resumes, and ask candidate questions.
 The frontend API URL is configured with `NEXT_PUBLIC_API_URL`; database and
 Groq credentials remain on the backend.
+
+## Run with Docker Compose
+
+The Compose stack uses `server/.env` for the backend and PostgreSQL settings.
+Add `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` there, matching the
+credentials and database name in `DATABASE_URL` and `DATABASE_ADMIN_URL`. Set
+a strong `JWT_SECRET_KEY` and your `GROQ_API_KEY` in the same file. Then build
+and start the frontend, API, and PostgreSQL containers:
+
+```powershell
+docker compose --env-file .\server\.env up --build -d
+```
+
+Open `http://localhost:3000`; the API docs are at `http://localhost:8000/docs`.
+`NEXT_PUBLIC_API_URL` must be the browser-accessible API URL. The frontend
+image embeds this value at build time, so rebuild it after changing the URL.
+The API uses `DATABASE_HOST=postgres` inside Compose; the existing database URLs
+can continue to use `localhost` for running the backend directly on your
+computer.
+
+Compose stores PostgreSQL data, uploaded resumes, and Chroma vectors in named
+volumes. `docker compose down` preserves them. The resume and Chroma volumes
+are external so `docker compose down -v` will not delete them; it can still
+delete the PostgreSQL volume.
