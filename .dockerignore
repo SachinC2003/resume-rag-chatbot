@@ -9,6 +9,7 @@
 !**/.env.example
 **/node_modules
 **/.next
+**/*.tsbuildinfo
 **/out
 /server/data
 /chroma_db

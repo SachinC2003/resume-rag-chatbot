@@ -1,14 +1,13 @@
 
-import chromadb
 import re
+import chromadb
+
 from server.rag.config import (
     CHROMA_DB_PATH,
-    LLM_MODEL,
     RESUME_COLLECTION_NAME,
     RESUME_PROFILE_COLLECTION_NAME,
 )
 from server.rag.embeddings import embedding_function
-from server.rag.llm_client import client
 from server.rag.rerancking import reranking
 
 SHORTLIST_CANDIDATE_LIMIT = 12
@@ -234,22 +233,6 @@ def retrieve_candidate_matches(
     return evidence
 
 
-def retrieve_candidate_evidence(
-    collection,
-    ranked_profiles: list[dict],
-    query: str,
-    section: str,
-) -> list[str]:
-    return [
-        f"Candidate: {evidence['candidate_name']}\n"
-        f"Section: {evidence['section']}\n"
-        f"Resume evidence: {evidence['text']}"
-        for evidence in retrieve_candidate_matches(
-            collection, ranked_profiles, query, section
-        )
-    ]
-
-
 def _matching_explanation(query: str, evidence: list[dict[str, str]]) -> str:
     query_terms = list(dict.fromkeys(
         term
@@ -449,150 +432,3 @@ def retrieve_shortlisted_candidates(
             }
         )
     return results
-
-
-def generate_answer(query: str, context: str) -> str:
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful resume assistant. "
-                    "Answer using only the provided resume context. "
-                    "When context contains multiple candidates, identify them by name. "
-                    "For questions asking who, list each matching candidate in context. "
-                    "For shortlisting, only recommend candidates whose resume evidence "
-                    "supports the requirement. Distinguish listed skills from demonstrated "
-                    "work or project experience, and do not claim that a degree is complete "
-                    "unless the resume explicitly confirms completion. The shortlist may "
-                    "be capped; do not imply it is exhaustive unless the context supports that. "
-                    "For education questions, list each candidate whose education evidence "
-                    "names the requested institution. If asked whether a degree was completed, "
-                    "state when the resume only gives a degree and date range without confirming "
-                    "completion. "
-                    "If the answer is missing, say you cannot find "
-                    "the information in the resume. Do not invent details."
-                ),
-            },
-            {
-                "role": "user",
-                "content": f"Resume context:\n{context}\n\nQuestion: {query}",
-            },
-        ],
-        temperature=0.2,
-    )
-
-    return response.choices[0].message.content or ""
-
-
-def run_rag_pipeline(
-        query: str,
-        section: str,
-        candidate_name: str | None = None,
-        enhanced_query: dict | None = None
-) -> str:
-    """Retrieve relevant resume chunks and generate an answer."""
-
-    # 1. Create an embedding for the user's question
-    search_queries = (enhanced_query or {}).get("search_queries", [])
-    if not search_queries:
-        search_queries = [query]
-
-    query_embedding = embedding_function(search_queries)
-
-    # 2. Connect to ChromaDB
-    client = chromadb.PersistentClient(path=str(CHROMA_DB_PATH))
-    collection = client.get_collection(name=RESUME_COLLECTION_NAME)
-    profile_collection = client.get_or_create_collection(
-        name=RESUME_PROFILE_COLLECTION_NAME
-    )
-
-    result_count = collection.count()
-    if result_count == 0:
-        raise RuntimeError("The resume collection is empty. Run the application to index the PDF first.")
-
-
-
-    # Search all candidate profiles first for questions that do not name a candidate.
-    if not candidate_name:
-        profile_count = profile_collection.count()
-        if profile_count == 0:
-            raise RuntimeError(
-                "Candidate profiles are not indexed. Re-run the application to "
-                "index resumes before asking shortlist questions."
-            )
-
-        profiles = profile_collection.get(include=["documents", "metadatas"])
-        profile_results = profile_collection.query(
-            query_embeddings=query_embedding,
-            n_results=profile_count,
-        )
-        ranked_profiles = rank_candidate_profiles(query, profiles, profile_results)
-        documents = retrieve_candidate_evidence(
-            collection, ranked_profiles, query, section
-        )
-        if not documents:
-            raise RuntimeError("No resume evidence was returned for the question.")
-        return generate_answer(query, "\n\n".join(documents))
-
-    # Retrieve relevant chunks directly when a specific candidate is named.
-    query_args = {
-        "query_embeddings": query_embedding,
-        "n_results": min(10, result_count)
-    }
-
-    metadata_filters = []
-    if section != "general":
-        metadata_filters.append({"section": section})
-    if candidate_name:
-        # Match a partial user-provided name against the full indexed candidate name.
-        candidate_name = resolve_candidate_name(collection, candidate_name)
-        metadata_filters.append(
-            {"candidate_name_normalized": candidate_name}
-        )
-    if len(metadata_filters) == 1:
-        query_args["where"] = metadata_filters[0]
-    elif metadata_filters:
-        query_args["where"] = {"$and": metadata_filters}
-
-    results = collection.query(**query_args)
-    if metadata_filters and not any(results["documents"]):
-        # Keep a candidate filter when relaxing a section filter to avoid mixing resumes.
-        if candidate_name and section != "general":
-            query_args["where"] = {"candidate_name_normalized": candidate_name}
-            results = collection.query(**query_args)
-        elif not candidate_name:
-            query_args.pop("where")
-            results = collection.query(**query_args)
-
-    # Include candidate names in the answer context and keep identical chunks per candidate.
-    documents = []
-    seen_chunks = set()
-    for query_documents, query_metadatas in zip(
-        results["documents"], results["metadatas"]
-    ):
-        for doc, metadata in zip(query_documents, query_metadatas):
-            candidate = metadata.get("candidate_name", "Unknown candidate")
-            chunk_key = (metadata.get("candidate_id"), doc)
-            if chunk_key not in seen_chunks:
-                documents.append(
-                    f"Candidate: {candidate}\n"
-                    f"Section: {metadata.get('section', 'general')}\n"
-                    f"Resume content: {doc}"
-                )
-                seen_chunks.add(chunk_key)
-
-    # Reranking the chunks according to relevance
-    reranked_chunks = reranking(documents, query)
-
-    # Limit the total retrieved chunks.
-    documents = reranked_chunks[0:5]
-    if not documents:
-        raise RuntimeError("No resume content was returned for the question.")
-    context = "\n\n".join(documents)
-
-    # 5. Generate the final answer using Groq
-    answer = generate_answer(query, context)
-
-    return answer
