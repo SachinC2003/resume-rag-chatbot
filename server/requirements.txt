@@ -1,0 +1,12 @@
+bcrypt>=5.0.0
+chromadb>=1.5.9
+fastapi>=0.115
+groq>=1.7.0
+psycopg[binary]>=3.3.8
+pyjwt>=2.15.1
+pymupdf>=2.0
+python-dotenv>=1.2.4
+python-multipart>=0.0.9
+sentence-transformers>=6.2.0
+sqlalchemy>=2.1.8
+uvicorn[standard]>=0.30
