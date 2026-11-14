@@ -13,6 +13,11 @@ class Base(DeclarativeBase):
     pass
 
 
+def _override_database_host(url: URL) -> URL:
+    host = os.getenv("DATABASE_HOST")
+    return url.set(host=host) if host else url
+
+
 def _database_url() -> URL:
     value = os.getenv("DATABASE_URL")
     if not value:
@@ -21,7 +26,7 @@ def _database_url() -> URL:
         value = value.replace("postgres://", "postgresql+psycopg://", 1)
     elif value.startswith("postgresql://"):
         value = value.replace("postgresql://", "postgresql+psycopg://", 1)
-    url = make_url(value)
+    url = _override_database_host(make_url(value))
     if url.get_backend_name() != "postgresql":
         raise RuntimeError("DATABASE_URL must use PostgreSQL.")
     return url
@@ -54,7 +59,7 @@ def ensure_database_exists() -> None:
             "create databases."
         ) from target_error
 
-    admin_url = make_url(admin_value)
+    admin_url = _override_database_host(make_url(admin_value))
     if admin_url.get_backend_name() != "postgresql":
         raise RuntimeError("DATABASE_ADMIN_URL must use PostgreSQL.")
     if not admin_url.database:
